@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+</head>
+<body>
+  <div id="preloader"></div>
+  <script src="libs/system.js"></script>
+  <script src="config.js"></script>
+  <script >
+    // Dirty little preloader
+    var VERTICAL = "\|";
+    var HORIZONTAL = "\u2013";
+    var FORWARD_SLASH = "\/";
+    var BACKWARD_SLASH = "\\";
+
+    var sequence = [VERTICAL, FORWARD_SLASH, HORIZONTAL, BACKWARD_SLASH, VERTICAL, FORWARD_SLASH, HORIZONTAL, BACKWARD_SLASH ];
+    var pointer = 0;
+
+    var preloader = document.getElementById('preloader');
+    preloader.textContent = sequence[pointer];
+
+    var interval = setInterval(function() {;
+      pointer += 1;
+      if(pointer == pointer.length) { pointer = 0; }
+      preloader.textContent = sequence[pointer];
+    }, 250);
+
+    System.import('src/main').then(function() {
+      preloader.style.display = "none";
+      clearInterval(interval);
+    });
+  </script>
+</body>
+</html>
