@@ -2,33 +2,47 @@
 
 class Tween {
   constructor(property) {
-    this.property = property;
     this.isRunning = false;
-    this.startValue = 0.0;
-    this.endValue = 0.0;
-    this.easingFunction = (t,b,c,d) => { return 0; }
+    this.startValue = property;
+    this.endValue = property;
+    this.easingFunction = (t,b,c,d) => { return 0; };
     this.timeStartedAt;
     this.engine;
   }
   start() {
+    function* step(startValue, endValue, duration, easingFunction) {
+      let startTime = Date.now();
+      let currentTime = 0;
+      while(currentTime < duration) {
+        currentTime = Date.now() - startTime;
+        yield easingFunction(currentTime, startValue, endValue - startValue, duration);
+      }
+    }
+
     return new Promise((resolve, reject) => {
       if(this.isRunning) { reject("Tween already running"); }
       this.isRunning = true;
-      this.property = this.startValue;
-      this.timeStartedAt = Date.now();
+
+      var stepGen = step(this.startValue, this.endValue, this.duration, this.easingFunction);
+
       this.updateInterval = setInterval(() => {
-        var time = Date.now() - this.timeStartedAt;
-        if(time >= this.duration) {
-          this.property = this.endValue;
-          clearInterval(this.updateInterval);
-          this.isRunning = false;
-          this.updateCallback = null;
-          resolve(this.property);
+        var stepResult = stepGen.next();
+        if(stepResult.done) {
+          this.end(stepResult);
+          resolve(this.endValue);
         }
-        this.property = this.easingFunction(time, this.startValue, this.endValue - this.startValue, this.duration);
-        if(this.updateCallback) { this.updateCallback(this.property); }
+        else {
+          if(this.updateCallback) {
+            this.updateCallback(stepResult.value);
+          }
+        }
       }, 16);
     });
+  }
+  end() {
+    clearInterval(this.updateInterval);
+    this.isRunning = false;
+    this.updateCallback = null;
   }
   to(value) {
     this.endValue = value;
